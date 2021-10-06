@@ -29,7 +29,7 @@ func NewBackend() *Backend {
 }
 
 // DecodeAddress reads and decodes an address from an io.Writer
-func (b *Backend) DecodeAddress(r io.Reader) (wallet.Address, error) {
+func (*Backend) DecodeAddress(r io.Reader) (wallet.Address, error) {
 	var a Address
 	err := a.Decode(r)
 	return &a, err
@@ -38,13 +38,13 @@ func (b *Backend) DecodeAddress(r io.Reader) (wallet.Address, error) {
 const SigntuareLength = 64
 
 // DecodeSig reads a signature from the provided stream.
-func (b *Backend) DecodeSig(r io.Reader) (wallet.Sig, error) {
+func (*Backend) DecodeSig(r io.Reader) (wallet.Sig, error) {
 	sig := make([]byte, SigntuareLength)
 	return sig, pio.Decode(r, &sig)
 }
 
 // VerifySignature verifies if this signature was signed by this address.
-func (b *Backend) VerifySignature(msg []byte, sig wallet.Sig, addr wallet.Address) (bool, error) {
+func (*Backend) VerifySignature(msg []byte, sig wallet.Sig, addr wallet.Address) (bool, error) {
 	a, err := AsAddr(addr)
 	if err != nil {
 		return false, err
