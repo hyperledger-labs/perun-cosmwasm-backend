@@ -1,0 +1,280 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "description": "Message to call functions on the [crate::contract].\n\nEach message corresponds to one function.",
+  "anyOf": [
+    {
+      "description": "Deposits funds into a channel for a specific [FundingId].\n\nAdds the newly deposited amount to already existing deposits. Funds that are deposited to an invalid `funding_id` will be lost. Over-funding a channel can result in lost funds as well.",
+      "type": "object",
+      "required": [
+        "deposit"
+      ],
+      "properties": {
+        "deposit": {
+          "$ref": "#/definitions/WrappedBinary"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Disputes a channel in case of a dishonest participant.\n\nCan only be called with a non-finalized state that is signed by all participants. Once a dispute is started, anyone can dispute the channel again with a state that has a higher [State::version]. A dispute automatically starts a timeout of [Params::dispute_duration] and can only be re-disputed while it did not run out. [ExecuteMsg::Conclude] can be called after the timeout ran out.",
+      "type": "object",
+      "required": [
+        "dispute"
+      ],
+      "properties": {
+        "dispute": {
+          "type": "object",
+          "required": [
+            "params",
+            "sigs",
+            "state"
+          ],
+          "properties": {
+            "params": {
+              "$ref": "#/definitions/Params"
+            },
+            "sigs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Sig"
+              }
+            },
+            "state": {
+              "$ref": "#/definitions/State"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Concludes a channel.\n\nExpects either a final state or the dispute period to be over.",
+      "type": "object",
+      "required": [
+        "conclude"
+      ],
+      "properties": {
+        "conclude": {
+          "type": "object",
+          "required": [
+            "params",
+            "sigs",
+            "state"
+          ],
+          "properties": {
+            "params": {
+              "$ref": "#/definitions/Params"
+            },
+            "sigs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Sig"
+              }
+            },
+            "state": {
+              "$ref": "#/definitions/State"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Withdraws funds from a concluded channel.\n\nCan be called by each participant after a channel was concluded to withdraw his outcome of the channel. This is the counterpart to [ExecuteMsg::Deposit].",
+      "type": "object",
+      "required": [
+        "withdraw"
+      ],
+      "properties": {
+        "withdraw": {
+          "type": "object",
+          "required": [
+            "sig",
+            "withdrawal"
+          ],
+          "properties": {
+            "sig": {
+              "$ref": "#/definitions/Sig"
+            },
+            "withdrawal": {
+              "$ref": "#/definitions/Withdrawal"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "NativeBalance": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Coin"
+      }
+    },
+    "OffIdentity": {
+      "description": "Off-Chain identity of a participant.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/WrappedBinary"
+        }
+      ]
+    },
+    "Params": {
+      "description": "Fixed parameters of a channel.\n\nDefines the [ChannelId] of a channel via [Params::channel_id].",
+      "type": "object",
+      "required": [
+        "dispute_duration",
+        "nonce",
+        "participants"
+      ],
+      "properties": {
+        "dispute_duration": {
+          "description": "Challenge duration of the channel.\n\nDescribes how long a dispute will be held open.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        },
+        "nonce": {
+          "description": "Nonce to make these Params unique. Should be picked randomly.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
+        },
+        "participants": {
+          "description": "Participants of the channel.\n\nContains the off-chain identities which are used to verify signatures for off-chain related crypto.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OffIdentity"
+          }
+        }
+      }
+    },
+    "Sig": {
+      "description": "Cryptographic signature.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/WrappedBinary"
+        }
+      ]
+    },
+    "State": {
+      "description": "Off-Chain state of a channel.",
+      "type": "object",
+      "required": [
+        "balances",
+        "channel_id",
+        "finalized",
+        "version"
+      ],
+      "properties": {
+        "balances": {
+          "description": "Balance of each participant in the channel.\n\nMust have the same length as [Params::participants]. The balances of a final state describe the outcome of a channel and can then be withdrawn.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NativeBalance"
+          }
+        },
+        "channel_id": {
+          "description": "Unique channel ID.\n\nIs calculated from the channel's [Params] with [Params::channel_id]. This locks all parameters in place and ensures that a participant that signed a state also signed the parameters of a channel.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/WrappedBinary"
+            }
+          ]
+        },
+        "finalized": {
+          "description": "Whether or not this state is final.\n\nFinal states define the last state of a channel. An honest participant will never sign another state after he signed a final state.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Version of the state.\n\nHigher version states can override disputes with lower versions. An honest participant will never sign two state with the same version.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        }
+      }
+    },
+    "Uint128": {
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+      "type": "string"
+    },
+    "Uint64": {
+      "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+      "type": "string"
+    },
+    "Withdrawal": {
+      "description": "Withdrawal authorization for on-chain funds.\n\nThis is signed by an off-chain participant too authorize on-chain funds withdrawal to a specific on-chain account.\n\nNOTE: The signature is not part of the struct.",
+      "type": "object",
+      "required": [
+        "channel_id",
+        "part",
+        "receiver"
+      ],
+      "properties": {
+        "channel_id": {
+          "description": "Channel from with to withdraw.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/WrappedBinary"
+            }
+          ]
+        },
+        "part": {
+          "description": "Off-chain participant to debit.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OffIdentity"
+            }
+          ]
+        },
+        "receiver": {
+          "description": "On-Chain Account to credited.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            }
+          ]
+        }
+      }
+    },
+    "WrappedBinary": {
+      "description": "WrappedBinary is a wrapper around Binary that enables usage as a map key.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        }
+      ]
+    }
+  }
+}

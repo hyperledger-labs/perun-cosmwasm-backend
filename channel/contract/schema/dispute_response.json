@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DisputeResponse",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Dispute"
+    }
+  ],
+  "definitions": {
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "Dispute": {
+      "description": "Stores an on-chain dispute of a channel. Can be advanced with a higher version via `Dispute` as long as the timeout did not run out.",
+      "type": "object",
+      "required": [
+        "concluded",
+        "state",
+        "timeout"
+      ],
+      "properties": {
+        "concluded": {
+          "description": "Indicates whether the dispute has been concluded.",
+          "type": "boolean"
+        },
+        "state": {
+          "description": "The state of the disputed channel.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/State"
+            }
+          ]
+        },
+        "timeout": {
+          "description": "Timeout of the dispute.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            }
+          ]
+        }
+      }
+    },
+    "NativeBalance": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Coin"
+      }
+    },
+    "State": {
+      "description": "Off-Chain state of a channel.",
+      "type": "object",
+      "required": [
+        "balances",
+        "channel_id",
+        "finalized",
+        "version"
+      ],
+      "properties": {
+        "balances": {
+          "description": "Balance of each participant in the channel.\n\nMust have the same length as [Params::participants]. The balances of a final state describe the outcome of a channel and can then be withdrawn.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NativeBalance"
+          }
+        },
+        "channel_id": {
+          "description": "Unique channel ID.\n\nIs calculated from the channel's [Params] with [Params::channel_id]. This locks all parameters in place and ensures that a participant that signed a state also signed the parameters of a channel.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/WrappedBinary"
+            }
+          ]
+        },
+        "finalized": {
+          "description": "Whether or not this state is final.\n\nFinal states define the last state of a channel. An honest participant will never sign another state after he signed a final state.",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Version of the state.\n\nHigher version states can override disputes with lower versions. An honest participant will never sign two state with the same version.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        }
+      }
+    },
+    "Timestamp": {
+      "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint64"
+        }
+      ]
+    },
+    "Uint128": {
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+      "type": "string"
+    },
+    "Uint64": {
+      "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+      "type": "string"
+    },
+    "WrappedBinary": {
+      "description": "WrappedBinary is a wrapper around Binary that enables usage as a map key.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        }
+      ]
+    }
+  }
+}
