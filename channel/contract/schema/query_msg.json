@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "description": "Message to query the state of the [crate::contract].\n\nEach message corresponds to one query.",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "deposit"
+      ],
+      "properties": {
+        "deposit": {
+          "$ref": "#/definitions/WrappedBinary"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "dispute"
+      ],
+      "properties": {
+        "dispute": {
+          "$ref": "#/definitions/WrappedBinary"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "WrappedBinary": {
+      "description": "WrappedBinary is a wrapper around Binary that enables usage as a map key.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        }
+      ]
+    }
+  }
+}
